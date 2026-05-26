@@ -2,6 +2,10 @@
 
 # dependencies
 /node_modules
+backend/node_modules
+
+# backend folder (separate repo)
+backend/
 /.pnp
 .pnp.*
 .yarn/*
