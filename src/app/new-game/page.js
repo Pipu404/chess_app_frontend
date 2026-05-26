@@ -60,7 +60,9 @@ export default function NewGame() {
     if (!token) router.push("/login");
   }, [router]);
 
-  const handleStart = () => router.push("/play");
+  const handleStart = () => {
+    router.push(`/play?mode=${selectedMode}&time=${selectedTime}&side=${selectedSide}&difficulty=${selectedDifficulty}`);
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-zinc-50 items-center justify-center font-sans text-zinc-900 px-4 py-6">
