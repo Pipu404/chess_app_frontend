@@ -3,13 +3,17 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Mail, Lock, ChevronLeft, ArrowRight } from "lucide-react";
+import { Mail, Lock, ChevronLeft, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { postJson } from "@/lib/api";
+import { setAuthenticatedUser } from "@/lib/authStore";
+import { roleHome } from "@/lib/roleHome";
 
 export default function Login() {
   const router = useRouter();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,23 +21,12 @@ export default function Login() {
     setLoading(true);
     
     try {
-      const res = await fetch("http://localhost:5000/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
-      });
+      const data = await postJson("/api/auth/login", formData);
       
-      const data = await res.json();
-      
-      if (!res.ok) {
-        throw new Error(data.msg || data.error || "Something went wrong");
-      }
-      
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      router.push("/");
+      setAuthenticatedUser(data.user);
+      router.push(roleHome(data.user.role));
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : "Unable to sign in. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -58,7 +51,7 @@ export default function Login() {
           </div>
 
           <form className="flex flex-col gap-5 flex-1" onSubmit={handleSubmit}>
-            {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-xl font-medium text-center">{error}</div>}
+            {error && <div role="alert" aria-live="polite" className="p-3 bg-red-50 text-red-600 text-sm rounded-xl font-medium text-center">{error}</div>}
             <div className="space-y-4">
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -79,13 +72,22 @@ export default function Login() {
                   <Lock size={20} className="text-zinc-400" />
                 </div>
                 <input 
-                  type="password" 
+                  type={showPassword ? "text" : "password"}
                   placeholder="Password" 
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full bg-zinc-50 border border-zinc-200 text-zinc-900 rounded-2xl pl-11 pr-4 py-4 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all placeholder:text-zinc-400 font-medium"
+                  className="w-full bg-zinc-50 border border-zinc-200 text-zinc-900 rounded-2xl pl-11 pr-12 py-4 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all placeholder:text-zinc-400 font-medium"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                  className="absolute inset-y-0 right-0 flex items-center pr-4 text-zinc-400 transition-colors hover:text-zinc-700"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
             </div>
 
@@ -115,7 +117,7 @@ export default function Login() {
 
           <div className="flex justify-center items-center mt-auto pt-8">
             <p className="text-sm text-zinc-500 font-medium">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{" "}
               <Link href="/signup" className="text-zinc-900 font-bold hover:underline">
                 Sign up
               </Link>

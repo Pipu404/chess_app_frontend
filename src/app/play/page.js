@@ -2,39 +2,30 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState, useRef, Suspense } from "react";
+import { useCallback, useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, Settings, RotateCcw, Flag, Share, ChevronRight, Play, Pause, AlertCircle } from "lucide-react";
 import { Chess } from "chess.js";
+import { useAuth } from "@/hooks/useAuth";
+import { getGameConfig } from "@/lib/gameConfig";
+import { chooseAIMove } from "@/lib/chessAi";
+import { CHESS_PIECES } from "@/lib/chessPieces";
 
-const PIECES = {
-  w: {
-    p: "https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg",
-    n: "https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg",
-    b: "https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg",
-    r: "https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg",
-    q: "https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg",
-    k: "https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg",
-  },
-  b: {
-    p: "https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg",
-    n: "https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg",
-    b: "https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg",
-    r: "https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg",
-    q: "https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg",
-    k: "https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg",
-  }
-};
+const AI_THINKING_DELAY_MS = 1500;
 
 function GameContent() {
   const router = useRouter();
+  const auth = useAuth();
   const searchParams = useSearchParams();
 
-  // URL Parameters
-  const mode = searchParams.get("mode") || "online"; // online, ai, local
-  const timeParam = searchParams.get("time") || "10+0"; // e.g., 10+0, 3+2
-  const sideParam = searchParams.get("side") || "White"; // White, Black
-  const difficulty = searchParams.get("difficulty") || "Medium";
+  const {
+    mode,
+    time: timeParam,
+    side: sideParam,
+    difficulty,
+    initialSeconds,
+    incrementSeconds,
+  } = getGameConfig(searchParams);
 
   // Chess instance state
   const [game, setGame] = useState(() => new Chess());
@@ -46,44 +37,24 @@ function GameContent() {
   const [lastMove, setLastMove] = useState(null); // { from, to }
 
   // User details
-  const [userName, setUserName] = useState("Player");
+  const userName = auth.user?.name || "Player";
 
   // Game configuration
   const userColor = sideParam.toLowerCase() === "black" ? "b" : "w";
   const isFlipped = userColor === "b";
 
-  // Parsing time limit (e.g. "10+2" -> 10 mins, 2s inc)
-  const parseTimeLimit = (str) => {
-    if (str === "Custom" || !str.includes("+")) {
-      return { initialSeconds: 600, incrementSeconds: 0 }; // Default 10 min
-    }
-    const [minStr, incStr] = str.split("+");
-    const initialSeconds = parseInt(minStr, 10) * 60;
-    const incrementSeconds = parseInt(incStr, 10);
-    return { initialSeconds, incrementSeconds };
-  };
-
-  const { initialSeconds, incrementSeconds } = parseTimeLimit(timeParam);
-
   // Timers state (in seconds)
   const [whiteTime, setWhiteTime] = useState(initialSeconds);
   const [blackTime, setBlackTime] = useState(initialSeconds);
-  const [gameStarted, setGameStarted] = useState(false);
+  const [gameStarted, setGameStarted] = useState(mode === "ai");
   const [gameOver, setGameOver] = useState(null); // { reason: 'checkmate'|'draw'|'timeout'|'resigned', winner: 'White'|'Black'|'Draw' }
 
   // Reference to game loop / timers
   const timerRef = useRef(null);
 
-  // Load username
   useEffect(() => {
-    const userStr = localStorage.getItem("user");
-    if (userStr) {
-      try {
-        const u = JSON.parse(userStr);
-        setUserName(u.name || "Player");
-      } catch (e) {}
-    }
-  }, []);
+    if (auth.status === "anonymous") router.push("/login");
+  }, [auth.status, router]);
 
   // Timers logic
   useEffect(() => {
@@ -119,17 +90,6 @@ function GameContent() {
     };
   }, [turn, gameStarted, gameOver]);
 
-  // AI Turn triggering
-  useEffect(() => {
-    if (mode === "ai" && turn !== userColor && !gameOver) {
-      // Small thinking timeout for AI
-      const aiDelay = setTimeout(() => {
-        makeAIMove();
-      }, 700);
-      return () => clearTimeout(aiDelay);
-    }
-  }, [turn, mode, gameOver]);
-
   // Format seconds to MM:SS
   const formatTime = (secs) => {
     const m = Math.floor(secs / 60);
@@ -138,7 +98,7 @@ function GameContent() {
   };
 
   // Check Game State status helper
-  const updateGameState = (newGameInstance) => {
+  const updateGameState = useCallback((newGameInstance) => {
     setBoard(newGameInstance.board());
     setTurn(newGameInstance.turn());
     setHistory(newGameInstance.history({ verbose: true }));
@@ -151,59 +111,30 @@ function GameContent() {
         setGameOver({ reason: "draw", winner: "Draw" });
       }
     }
-  };
+  }, [setBoard, setGameOver, setHistory, setTurn]);
 
-  // AI Logic: selects moves
-  const makeAIMove = () => {
-    const moves = game.moves({ verbose: true });
-    if (moves.length === 0) return;
+  // AI Turn triggering
+  useEffect(() => {
+    if (mode === "ai" && turn !== userColor && !gameOver) {
+      const aiDelay = setTimeout(() => {
+        const selectedMove = chooseAIMove(game.moves({ verbose: true }), difficulty);
+        if (!selectedMove) return;
 
-    let selectedMove;
-    if (difficulty === "Easy") {
-      // Pick purely random
-      selectedMove = moves[Math.floor(Math.random() * moves.length)];
-    } else if (difficulty === "Medium") {
-      // Prefer captures if any, otherwise random
-      const captures = moves.filter(m => m.captured);
-      if (captures.length > 0 && Math.random() > 0.3) {
-        selectedMove = captures[Math.floor(Math.random() * captures.length)];
-      } else {
-        selectedMove = moves[Math.floor(Math.random() * moves.length)];
-      }
-    } else {
-      // Hard/Expert Heuristic (Basic smart choice: captures/checks first, then center squares)
-      const checks = moves.filter(m => m.san.includes("+"));
-      const captures = moves.filter(m => m.captured);
-      if (checks.length > 0) {
-        selectedMove = checks[Math.floor(Math.random() * checks.length)];
-      } else if (captures.length > 0) {
-        selectedMove = captures[Math.floor(Math.random() * captures.length)];
-      } else {
-        // Prefer center moves
-        const centerMoves = moves.filter(m => ["d4", "d5", "e4", "e5", "c4", "c5", "f3", "f6"].includes(m.to));
-        if (centerMoves.length > 0) {
-          selectedMove = centerMoves[Math.floor(Math.random() * centerMoves.length)];
+        const nextTurn = game.turn() === "w" ? "b" : "w";
+        game.move({ from: selectedMove.from, to: selectedMove.to, promotion: "q" });
+        setLastMove({ from: selectedMove.from, to: selectedMove.to });
+
+        if (nextTurn === "w") {
+          setBlackTime((previous) => previous + incrementSeconds);
         } else {
-          selectedMove = moves[Math.floor(Math.random() * moves.length)];
+          setWhiteTime((previous) => previous + incrementSeconds);
         }
-      }
+
+        updateGameState(game);
+      }, AI_THINKING_DELAY_MS);
+      return () => clearTimeout(aiDelay);
     }
-
-    if (selectedMove) {
-      const nextTurn = game.turn() === "w" ? "b" : "w";
-      game.move({ from: selectedMove.from, to: selectedMove.to, promotion: "q" });
-      setLastMove({ from: selectedMove.from, to: selectedMove.to });
-
-      // Apply increment
-      if (nextTurn === "w") {
-        setBlackTime(prev => prev + incrementSeconds);
-      } else {
-        setWhiteTime(prev => prev + incrementSeconds);
-      }
-
-      updateGameState(game);
-    }
-  };
+  }, [difficulty, game, gameOver, incrementSeconds, mode, turn, updateGameState, userColor]);
 
   // Square Click handler (for player movement)
   const handleSquareClick = (squareRepresentation) => {
@@ -292,7 +223,7 @@ function GameContent() {
     setLastMove(null);
     setWhiteTime(initialSeconds);
     setBlackTime(initialSeconds);
-    setGameStarted(false);
+    setGameStarted(mode === "ai");
     setGameOver(null);
   };
 
@@ -400,7 +331,7 @@ function GameContent() {
                       {piece && (
                         <div className="w-[85%] h-[85%] relative z-10 drop-shadow-sm active:scale-95 transition-transform">
                           <Image
-                            src={PIECES[piece.color][piece.type]}
+                            src={CHESS_PIECES[piece.color][piece.type]}
                             alt={`${piece.color}${piece.type}`}
                             fill
                             className="object-contain"

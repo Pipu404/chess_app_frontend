@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, Globe, Bot, Users } from "lucide-react";
+import { normalizeGameMode } from "@/lib/gameConfig";
+import { useAuth } from "@/hooks/useAuth";
 
 const MODES = [
   { id: "online", icon: Globe, label: "Online" },
@@ -45,23 +47,29 @@ const TYPE_ACTIVE_BG = {
 const DIFFICULTIES = ["Easy", "Medium", "Hard", "Expert"];
 const SIDES = ["White", "Black"];
 
-export default function NewGame() {
+function NewGameContent() {
   const router = useRouter();
+  const auth = useAuth();
   const searchParams = useSearchParams();
 
-  const initialMode = searchParams.get("mode") || "online";
+  const initialMode = normalizeGameMode(searchParams.get("mode"));
   const [selectedMode, setSelectedMode]           = useState(initialMode);
   const [selectedTime, setSelectedTime]           = useState("10+0");
   const [selectedDifficulty, setSelectedDifficulty] = useState("Medium");
   const [selectedSide, setSelectedSide]           = useState("White");
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) router.push("/login");
-  }, [router]);
+    if (auth.status === "anonymous") router.push("/login");
+  }, [auth.status, router]);
 
   const handleStart = () => {
-    router.push(`/play?mode=${selectedMode}&time=${selectedTime}&side=${selectedSide}&difficulty=${selectedDifficulty}`);
+    const gameParams = new URLSearchParams({
+      mode: selectedMode,
+      time: selectedTime,
+      side: selectedSide,
+      difficulty: selectedDifficulty,
+    });
+    router.push(`/play?${gameParams.toString()}`);
   };
 
   return (
@@ -214,5 +222,19 @@ export default function NewGame() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function NewGame() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-zinc-50">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-zinc-900 border-t-transparent" />
+        </div>
+      }
+    >
+      <NewGameContent />
+    </Suspense>
   );
 }

@@ -3,13 +3,24 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Mail, Lock, User, ChevronLeft, ArrowRight } from "lucide-react";
+import { Mail, Lock, User, ChevronLeft, ArrowRight, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { postJson } from "@/lib/api";
+import { setAuthenticatedUser } from "@/lib/authStore";
+import { roleHome } from "@/lib/roleHome";
 
 export default function SignUp() {
   const router = useRouter();
-  const [formData, setFormData] = useState({ name: "", email: "", password: "" });
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "player",
+    coachCode: "",
+  });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showCoachCode, setShowCoachCode] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,23 +28,12 @@ export default function SignUp() {
     setLoading(true);
     
     try {
-      const res = await fetch("http://localhost:5000/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
-      });
+      const data = await postJson("/api/auth/signup", formData);
       
-      const data = await res.json();
-      
-      if (!res.ok) {
-        throw new Error(data.msg || data.error || "Something went wrong");
-      }
-      
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      router.push("/");
+      setAuthenticatedUser(data.user);
+      router.push(roleHome(data.user.role));
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : "Unable to create your account. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -58,7 +58,7 @@ export default function SignUp() {
           </div>
 
           <form className="flex flex-col gap-5 flex-1" onSubmit={handleSubmit}>
-            {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-xl font-medium text-center">{error}</div>}
+            {error && <div role="alert" aria-live="polite" className="p-3 bg-red-50 text-red-600 text-sm rounded-xl font-medium text-center">{error}</div>}
             <div className="space-y-4">
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -72,6 +72,22 @@ export default function SignUp() {
                   className="w-full bg-zinc-50 border border-zinc-200 text-zinc-900 rounded-2xl pl-11 pr-4 py-4 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all placeholder:text-zinc-400 font-medium"
                   required
                 />
+              </div>
+
+              <div>
+                <label htmlFor="account-role" className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                  Account type
+                </label>
+                <select
+                  id="account-role"
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value, coachCode: "" })}
+                  className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-4 font-semibold text-zinc-900 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-zinc-900"
+                >
+                  <option value="player">Player — casual games and puzzles</option>
+                  <option value="student">Student — classes and homework</option>
+                  <option value="coach">Coach — teaching and analytics</option>
+                </select>
               </div>
 
               <div className="relative">
@@ -93,14 +109,48 @@ export default function SignUp() {
                   <Lock size={20} className="text-zinc-400" />
                 </div>
                 <input 
-                  type="password" 
+                  type={showPassword ? "text" : "password"}
                   placeholder="Password" 
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full bg-zinc-50 border border-zinc-200 text-zinc-900 rounded-2xl pl-11 pr-4 py-4 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all placeholder:text-zinc-400 font-medium"
+                  className="w-full bg-zinc-50 border border-zinc-200 text-zinc-900 rounded-2xl pl-11 pr-12 py-4 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all placeholder:text-zinc-400 font-medium"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                  className="absolute inset-y-0 right-0 flex items-center pr-4 text-zinc-400 transition-colors hover:text-zinc-700"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
+
+              {formData.role === "coach" && (
+                <div className="relative">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                    <ShieldCheck size={20} className="text-zinc-400" />
+                  </div>
+                  <input
+                    type={showCoachCode ? "text" : "password"}
+                    placeholder="Coach Registration Code"
+                    value={formData.coachCode}
+                    onChange={(e) => setFormData({ ...formData, coachCode: e.target.value })}
+                    className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 py-4 pl-11 pr-12 font-medium text-zinc-900 outline-none transition-all placeholder:text-zinc-400 focus:border-transparent focus:ring-2 focus:ring-zinc-900"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCoachCode((visible) => !visible)}
+                    aria-label={showCoachCode ? "Hide coach registration code" : "Show coach registration code"}
+                    aria-pressed={showCoachCode}
+                    className="absolute inset-y-0 right-0 flex items-center pr-4 text-zinc-400 transition-colors hover:text-zinc-700"
+                  >
+                    {showCoachCode ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="mt-6 flex flex-col gap-4">

@@ -4,6 +4,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import { logoutSession } from "@/lib/authStore";
+import { usePuzzleStats } from "@/hooks/usePuzzleStats";
 import {
   Menu, Bell, Globe, Bot, Users, BookOpen,
   Home, Puzzle, BarChart2, User,
@@ -89,8 +92,10 @@ const INITIAL_FRIENDS = [
 
 export default function HomeView() {
   const router = useRouter();
-  const [userName, setUserName] = useState("Player");
-  const [userInitial, setUserInitial] = useState("P");
+  const auth = useAuth();
+  const puzzleStats = usePuzzleStats();
+  const userName = auth.user?.name || "Player";
+  const userInitial = userName[0].toUpperCase();
   
   // Navigation & Dropdown states
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -107,18 +112,10 @@ export default function HomeView() {
   const activeFriend = friends.find(f => f.id === activeFriendId);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const userStr = localStorage.getItem("user");
-    if (!token) {
+    if (auth.status === "anonymous") {
       router.push("/login");
-    } else if (userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        setUserName(user.name || "Player");
-        setUserInitial((user.name || "P")[0].toUpperCase());
-      } catch (e) {}
     }
-  }, [router]);
+  }, [auth.status, router]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -138,9 +135,8 @@ export default function HomeView() {
     }
   }, [activeFriend?.messages, currentView]);
 
-  const handleSignOut = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+  const handleSignOut = async () => {
+    await logoutSession();
     router.push("/login");
   };
 
@@ -332,13 +328,15 @@ export default function HomeView() {
                 </div>
               </Link>
 
-              <Link href="#" className="flex items-center bg-white border border-zinc-200 rounded-2xl p-4 shadow-sm hover:border-zinc-300 hover:shadow-md transition-all active:scale-[0.98]">
+              <Link href="/puzzles" className="flex items-center bg-white border border-zinc-200 rounded-2xl p-4 shadow-sm hover:border-zinc-300 hover:shadow-md transition-all active:scale-[0.98]">
                 <div className="w-12 h-12 bg-zinc-50 rounded-xl flex items-center justify-center mr-4">
                   <BookOpen size={24} className="text-zinc-700" />
                 </div>
                 <div>
                   <h2 className="font-bold text-zinc-900">Learn</h2>
-                  <p className="text-xs font-medium text-zinc-500 mt-0.5">Puzzles, Lessons, and more</p>
+                  <p className="text-xs font-medium text-zinc-500 mt-0.5">
+                    {puzzleStats.solved > 0 ? `${puzzleStats.solved} solved • ${puzzleStats.currentStreak} streak` : "Solve tactics and track your progress"}
+                  </p>
                 </div>
               </Link>
             </div>
@@ -349,14 +347,14 @@ export default function HomeView() {
                 <Home size={22} fill="currentColor" />
                 <span className="text-[10px] font-bold">Home</span>
               </button>
-              <button className="flex flex-col items-center gap-1.5 text-zinc-400 hover:text-zinc-600 transition">
+              <Link href="/puzzles" className="flex flex-col items-center gap-1.5 text-zinc-400 hover:text-zinc-600 transition">
                 <Puzzle size={22} />
                 <span className="text-[10px] font-semibold">Puzzles</span>
-              </button>
-              <button className="flex flex-col items-center gap-1.5 text-zinc-400 hover:text-zinc-600 transition">
+              </Link>
+              <Link href="/puzzles" className="flex flex-col items-center gap-1.5 text-zinc-400 hover:text-zinc-600 transition">
                 <BarChart2 size={22} />
                 <span className="text-[10px] font-semibold">Stats</span>
-              </button>
+              </Link>
               <button
                 onClick={() => setDropdownOpen((o) => !o)}
                 className="flex flex-col items-center gap-1.5 text-zinc-400 hover:text-zinc-600 transition"

@@ -1,36 +1,47 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Chess App
 
-## Getting Started
+A mobile-first chess prototype built with Next.js 16 and React 19. It includes email/password authentication, a game lobby, local chess play, configurable clocks, and a lightweight browser AI.
 
-First, run the development server:
+See [DOCUMENTATION.md](./DOCUMENTATION.md) for architecture, API contracts, game behavior, setup, and implementation status.
+
+## Quick start
 
 ```bash
+# Terminal 1
+cd backend
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Terminal 2, from the repository root
+npm install
+npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Create `backend/.env` before starting the API:
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+```dotenv
+PORT=5000
+MONGODB_URI=mongodb://127.0.0.1:27017/chess-app
+JWT_SECRET=replace-with-a-long-random-secret
+COACH_REGISTRATION_CODE=replace-with-a-private-coach-code
+CLIENT_ORIGIN=http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Copy `.env.example` to `.env.local` if the API is not running at the default `http://localhost:5000` address:
 
-## Learn More
+```dotenv
+NEXT_PUBLIC_API_URL=http://localhost:5000
+```
 
-To learn more about Next.js, take a look at the following resources:
+Open `http://localhost:3000`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Commands
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Location | Command | Purpose |
+| --- | --- | --- |
+| root | `npm run dev` | Start Next.js in development |
+| root | `npm run build` | Create a production frontend build |
+| root | `npm start` | Serve the frontend build |
+| root | `npm run lint` | Run ESLint |
+| `backend/` | `npm run dev` | Start Express with Nodemon |
+| `backend/` | `npm start` | Start Express with Node.js |
