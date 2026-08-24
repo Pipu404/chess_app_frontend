@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Activity, ArrowRight, BookOpenCheck, CalendarClock, CheckCircle2, Clock3, LogOut, MessageSquareText, Swords, Target, Users } from "lucide-react";
+import { Activity, ArrowRight, BookOpen, BookOpenCheck, Brain, CalendarClock, CheckCircle2, Clock3, LogOut, MessageSquareText, Swords, Target, Users } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { logoutSession } from "@/lib/authStore";
 import { roleHome } from "@/lib/roleHome";
@@ -37,8 +37,8 @@ export default function StudentDashboard() {
   const signOut = async () => { await logoutSession(); router.push("/login"); };
   return <main className="min-h-screen bg-zinc-50 px-4 py-8 text-zinc-900"><div className="mx-auto w-full max-w-6xl">
     <header className="mb-7 flex items-start justify-between rounded-3xl bg-zinc-900 p-7 text-white shadow-xl"><div><p className="text-xs font-bold uppercase tracking-[.2em] text-zinc-400">Student portal</p><h1 className="mt-2 text-3xl font-black">Welcome, {auth.user?.name || "Student"}</h1><p className="mt-2 text-sm text-zinc-300">Your personalized chess learning journey.</p></div><button type="button" onClick={signOut} aria-label="Sign out" className="rounded-xl p-3 text-zinc-300 hover:bg-white/10"><LogOut size={20}/></button></header>
-    <nav className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">{[
-      { title: "Homework", href: "/student/homework", icon: CalendarClock }, { title: "Classrooms", href: "/student/classes", icon: Users }, { title: "Coach feedback", href: "/student/feedback", icon: MessageSquareText }, { title: "Player portal", href: "/player", icon: Swords }, { title: "Puzzle trainer", href: "/puzzles", icon: BookOpenCheck }
+    <nav className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-7">{[
+      { title: "Homework", href: "/student/homework", icon: CalendarClock }, { title: "Classrooms", href: "/student/classes", icon: Users }, { title: "Coach feedback", href: "/student/feedback", icon: MessageSquareText }, { title: "Improvement", href: "/improvement", icon: Brain }, { title: "Openings", href: "/openings", icon: BookOpen }, { title: "Player portal", href: "/player", icon: Swords }, { title: "Puzzle trainer", href: "/puzzles", icon: BookOpenCheck }
     ].map(item => <Link key={item.title} href={item.href} className="flex items-center justify-between rounded-2xl border bg-white p-4 font-bold shadow-sm"><span className="flex items-center gap-3"><item.icon size={19}/>{item.title}</span><ArrowRight size={16}/></Link>)}</nav>
     {error && <p className="rounded-2xl bg-red-50 p-4 text-red-700">{error}</p>}{!data && !error && <p className="rounded-3xl border bg-white p-10 text-center text-zinc-500">Loading your progress…</p>}
     {data && <><section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5"><Metric icon={CheckCircle2} label="Completion" value={`${data.summary.completionRate}%`}/><Metric icon={Target} label="Accuracy" value={`${data.summary.averageAccuracy}%`}/><Metric icon={Clock3} label="Avg. solve time" value={`${data.summary.averageTime}s`}/><Metric icon={Activity} label="Practice attempts" value={data.summary.totalPracticeAttempts}/><Metric icon={Users} label="Classrooms" value={data.summary.classrooms}/></section>

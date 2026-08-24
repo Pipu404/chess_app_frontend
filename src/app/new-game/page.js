@@ -72,7 +72,7 @@ function NewGameContent() {
       side: selectedSide,
       difficulty: selectedDifficulty,
     });
-    router.push(`/play?${gameParams.toString()}`);
+    router.push(`/${selectedMode === "online" ? "online" : "play"}?${gameParams.toString()}`);
   };
 
   const customTimeIsValid = Number.isInteger(Number(customMinutes)) && Number(customMinutes) >= 1 && Number(customMinutes) <= 180 && Number.isInteger(Number(customIncrement)) && Number(customIncrement) >= 0 && Number(customIncrement) <= 60;

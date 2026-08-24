@@ -29,10 +29,15 @@ function parseScore(line, turn) {
 function runAnalysis(fen, depth) {
   return createEngine().then(engine => new Promise((resolve, reject) => {
     const turn = fen.split(" ")[1]; let evaluation = 0; let principalVariation = [];
+    const timeout = setTimeout(() => {
+      engine.removeEventListener("message", onMessage);
+      engine.postMessage("stop");
+      reject(new Error("Stockfish analysis timed out"));
+    }, 20_000);
     const onMessage = event => {
       const line = String(event.data || ""); const parsed = parseScore(line, turn);
       if (parsed !== null && line.includes(" pv ")) { evaluation = parsed; principalVariation = line.split(" pv ")[1].trim().split(" "); }
-      if (line.startsWith("bestmove")) { engine.removeEventListener("message", onMessage); const bestMove = line.split(" ")[1]; if (!bestMove || bestMove === "(none)") reject(new Error("Stockfish found no legal move")); else resolve({ bestMove, evaluation, principalVariation }); }
+      if (line.startsWith("bestmove")) { clearTimeout(timeout); engine.removeEventListener("message", onMessage); const bestMove = line.split(" ")[1]; if (!bestMove || bestMove === "(none)") reject(new Error("Stockfish found no legal move")); else resolve({ bestMove, evaluation, principalVariation }); }
     };
     engine.addEventListener("message", onMessage); engine.postMessage(`position fen ${fen}`); engine.postMessage(`go depth ${depth}`);
   }));

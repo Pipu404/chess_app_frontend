@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { logoutSession } from "@/lib/authStore";
 import { roleHome } from "@/lib/roleHome";
 
-export default function RoleDashboard({ role, title, subtitle, features, allowedRoles }) {
+export default function RoleDashboard({ role, title, subtitle, features, allowedRoles, children }) {
   const router = useRouter();
   const auth = useAuth();
 
@@ -39,6 +39,8 @@ export default function RoleDashboard({ role, title, subtitle, features, allowed
             <LogOut size={20} />
           </button>
         </header>
+
+        {children}
 
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((feature) => (
