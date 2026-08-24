@@ -4,12 +4,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronLeft, Settings, RotateCcw, Flag, Share, ChevronRight, Play, Pause, AlertCircle } from "lucide-react";
+import { ChevronLeft, RotateCcw, Flag, Play, AlertCircle, BarChart3 } from "lucide-react";
 import { Chess } from "chess.js";
 import { useAuth } from "@/hooks/useAuth";
 import { getGameConfig } from "@/lib/gameConfig";
-import { chooseAIMove } from "@/lib/chessAi";
+import { chooseStockfishMove } from "@/lib/chessAi";
 import { CHESS_PIECES } from "@/lib/chessPieces";
+import { postJson } from "@/lib/api";
 
 const AI_THINKING_DELAY_MS = 1500;
 
@@ -51,6 +52,9 @@ function GameContent() {
 
   // Reference to game loop / timers
   const timerRef = useRef(null);
+  const saveStartedRef = useRef(false);
+  const [savedGameId, setSavedGameId] = useState(null);
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
     if (auth.status === "anonymous") router.push("/login");
@@ -90,6 +94,16 @@ function GameContent() {
     };
   }, [turn, gameStarted, gameOver]);
 
+  useEffect(() => {
+    if (!gameOver || !history.length || saveStartedRef.current) return;
+    saveStartedRef.current = true;
+    const clientGameId = crypto.randomUUID();
+    postJson("/api/games", {
+      clientGameId, mode, difficulty, timeControl: timeParam, userColor, result: gameOver,
+      moves: history.map(move => ({ from: move.from, to: move.to, promotion: move.promotion || "q", san: move.san })),
+    }).then(response => setSavedGameId(response.game._id)).catch(error => setSaveError(error.message));
+  }, [difficulty, gameOver, history, mode, timeParam, userColor]);
+
   // Format seconds to MM:SS
   const formatTime = (secs) => {
     const m = Math.floor(secs / 60);
@@ -116,12 +130,14 @@ function GameContent() {
   // AI Turn triggering
   useEffect(() => {
     if (mode === "ai" && turn !== userColor && !gameOver) {
-      const aiDelay = setTimeout(() => {
-        const selectedMove = chooseAIMove(game.moves({ verbose: true }), difficulty);
-        if (!selectedMove) return;
+      let cancelled = false;
+      const aiDelay = setTimeout(async () => {
+        try {
+          const selectedMove = await chooseStockfishMove(game.fen(), difficulty);
+          if (cancelled || !selectedMove) return;
 
         const nextTurn = game.turn() === "w" ? "b" : "w";
-        game.move({ from: selectedMove.from, to: selectedMove.to, promotion: "q" });
+          game.move({ from: selectedMove.from, to: selectedMove.to, promotion: selectedMove.promotion || "q" });
         setLastMove({ from: selectedMove.from, to: selectedMove.to });
 
         if (nextTurn === "w") {
@@ -130,9 +146,12 @@ function GameContent() {
           setWhiteTime((previous) => previous + incrementSeconds);
         }
 
-        updateGameState(game);
+          updateGameState(game);
+        } catch {
+          if (!cancelled) setGameOver({ reason: "engine error", winner: "Draw" });
+        }
       }, AI_THINKING_DELAY_MS);
-      return () => clearTimeout(aiDelay);
+      return () => { cancelled = true; clearTimeout(aiDelay); };
     }
   }, [difficulty, game, gameOver, incrementSeconds, mode, turn, updateGameState, userColor]);
 
@@ -225,6 +244,15 @@ function GameContent() {
     setBlackTime(initialSeconds);
     setGameStarted(mode === "ai");
     setGameOver(null);
+    saveStartedRef.current = false;
+    setSavedGameId(null);
+    setSaveError("");
+  };
+
+  const openReview = () => {
+    const reviewMoves = game.history({ verbose: true }).map(move => ({ from: move.from, to: move.to, promotion: move.promotion || "q", san: move.san }));
+    sessionStorage.setItem("chess:last-game-review", JSON.stringify({ gameId: savedGameId, moves: reviewMoves, result: gameOver, mode, difficulty, timeControl: timeParam, playedAt: new Date().toISOString() }));
+    router.push(savedGameId ? `/review?gameId=${savedGameId}` : "/review");
   };
 
   // Organize board files & ranks for render
@@ -240,12 +268,12 @@ function GameContent() {
   const playerTime = isFlipped ? blackTime : whiteTime;
 
   return (
-    <div className="flex flex-col min-h-screen bg-zinc-50 items-center justify-center font-sans text-zinc-900 px-4 py-4">
-      {/* Mobile Container */}
-      <div className="w-full max-w-[400px] bg-white h-[850px] shadow-2xl rounded-[40px] overflow-hidden flex flex-col relative border-[8px] border-zinc-100">
+    <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-3 py-3 font-sans text-zinc-900 sm:px-4 lg:px-6 lg:py-6">
+      {/* Responsive game shell */}
+      <div className="relative flex min-h-[780px] w-full max-w-[420px] flex-col overflow-hidden rounded-[32px] border-4 border-zinc-100 bg-white shadow-2xl sm:rounded-[40px] sm:border-8 lg:grid lg:h-[calc(100vh-3rem)] lg:min-h-[720px] lg:max-h-[920px] lg:max-w-6xl lg:grid-cols-[minmax(0,1fr)_360px] lg:grid-rows-[auto_auto_1fr_auto_auto] lg:rounded-[32px] lg:border-4">
         
         {/* Top Header */}
-        <div className="flex items-center justify-between px-6 pt-10 pb-4">
+        <div className="flex items-center justify-between px-6 pb-4 pt-8 lg:col-span-2 lg:row-start-1 lg:border-b lg:px-8 lg:py-5">
           <Link href="/new-game" className="p-2 -ml-2 rounded-full hover:bg-zinc-100 transition">
             <ChevronLeft size={24} className="text-zinc-600" />
           </Link>
@@ -273,7 +301,7 @@ function GameContent() {
         </div>
 
         {/* Board Header Stats */}
-        <div className="px-6 py-2 flex justify-between items-center bg-zinc-50/50 border-y border-zinc-100">
+        <div className="flex items-center justify-between border-y border-zinc-100 bg-zinc-50/50 px-6 py-2 lg:col-start-1 lg:row-start-2 lg:border-r lg:border-t-0 lg:px-8 lg:py-3">
           <span className="text-[11px] font-bold tracking-wide uppercase text-zinc-400">
             {mode.toUpperCase()} MODE • {timeParam}
           </span>
@@ -283,8 +311,8 @@ function GameContent() {
         </div>
 
         {/* Board Area */}
-        <div className="px-4 py-4 flex-shrink-0">
-          <div className="w-full aspect-square bg-[#efebe4] rounded-2xl flex flex-col relative shadow-md border border-zinc-200/60 overflow-hidden">
+        <div className="flex-shrink-0 px-4 py-4 lg:col-start-1 lg:row-start-3 lg:row-span-3 lg:flex lg:min-h-0 lg:items-center lg:justify-center lg:border-r lg:p-6">
+          <div className="relative flex aspect-square w-full flex-col overflow-hidden rounded-2xl border border-zinc-200/60 bg-[#efebe4] shadow-md lg:h-full lg:max-h-[680px] lg:w-auto lg:max-w-full lg:flex-1">
             {renderedRows.map((rank, rowIndex) => (
               <div key={rank} className="flex flex-1">
                 {renderedCols.map((file, colIndex) => {
@@ -300,6 +328,7 @@ function GameContent() {
                   return (
                     <div
                       key={squareRepr}
+                      data-square={squareRepr}
                       onClick={() => handleSquareClick(squareRepr)}
                       className={`flex-1 relative flex items-center justify-center cursor-pointer transition-all duration-100 select-none ${
                         isDark ? "bg-[#e2d5c3]" : "bg-[#f5f1ea]"
@@ -348,10 +377,10 @@ function GameContent() {
         </div>
 
         {/* Move History Log */}
-        <div className="px-6 py-2 flex-shrink-0">
-          <div className="flex items-center text-xs font-semibold text-zinc-600 gap-2 bg-zinc-50 py-2.5 px-4 rounded-xl shadow-inner border border-zinc-100 overflow-x-auto whitespace-nowrap scrollbar-thin">
+        <div className="flex-shrink-0 px-6 py-2 lg:col-start-2 lg:row-start-2 lg:row-span-2 lg:min-h-0 lg:px-5 lg:py-5">
+          <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-2.5 text-xs font-semibold text-zinc-600 shadow-inner scrollbar-thin lg:h-full lg:content-start lg:items-start lg:overflow-y-auto lg:whitespace-normal lg:flex-wrap">
             <span className="text-[10px] uppercase font-bold text-zinc-400">Moves:</span>
-            {history.slice(-4).map((h, i) => (
+            {history.map((h, i) => (
               <div key={i} className="flex gap-1 items-center bg-white px-2 py-1 rounded shadow-sm border border-zinc-100">
                 <span className="text-zinc-400 text-[10px]">{h.color === "w" ? "W:" : "B:"}</span>
                 <span className="font-bold text-zinc-800">{h.san}</span>
@@ -361,10 +390,10 @@ function GameContent() {
           </div>
         </div>
 
-        <div className="flex-grow"></div>
+        <div className="flex-grow lg:hidden"></div>
 
         {/* Player Info (Bottom) */}
-        <div className="flex justify-between items-center px-6 py-3 border-t border-zinc-100 bg-zinc-50/20">
+        <div className="flex items-center justify-between border-t border-zinc-100 bg-zinc-50/20 px-6 py-3 lg:col-start-2 lg:row-start-4 lg:px-5 lg:py-4">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-zinc-900 flex items-center justify-center text-white font-bold text-sm shadow-sm ring-2 ring-zinc-200">
               {userName[0]?.toUpperCase() || "P"}
@@ -380,7 +409,7 @@ function GameContent() {
         </div>
 
         {/* Game Actions Panel */}
-        <div className="px-8 pb-10 pt-4 flex justify-between items-center bg-white border-t border-zinc-100">
+        <div className="flex items-center justify-between border-t border-zinc-100 bg-white px-8 pb-8 pt-4 lg:col-start-2 lg:row-start-5 lg:px-7 lg:py-5">
           <button 
             onClick={handleUndo} 
             disabled={history.length === 0 || gameOver}
@@ -427,10 +456,18 @@ function GameContent() {
                 </span>
               </div>
 
-              <div className="flex gap-2 w-full">
+              <div className="grid grid-cols-2 gap-2 w-full">
+                {saveError && <p className="col-span-2 rounded-lg bg-red-50 p-2 text-[10px] font-bold text-red-700">Game history save failed: {saveError}</p>}
+                <button
+                  onClick={openReview}
+                  disabled={history.length === 0 || (!savedGameId && !saveError)}
+                  className="col-span-2 flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-300 text-zinc-950 font-black py-3.5 rounded-xl text-xs transition disabled:opacity-40"
+                >
+                  <BarChart3 size={17} /> {!savedGameId && !saveError ? "Saving game…" : "Review Game"}
+                </button>
                 <Link 
                   href="/new-game" 
-                  className="flex-1 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 font-bold py-3.5 rounded-xl text-xs transition"
+                  className="bg-zinc-100 hover:bg-zinc-200 text-zinc-800 font-bold py-3.5 rounded-xl text-xs transition"
                 >
                   New Lobby
                 </Link>

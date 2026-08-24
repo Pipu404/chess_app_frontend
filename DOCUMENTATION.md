@@ -4,7 +4,7 @@
 
 Chess App is a mobile-first web prototype with two independent applications: a Next.js 16 App Router frontend and an Express 5 API backed by MongoDB.
 
-The frontend owns all current chess state. `chess.js` validates moves and detects terminal positions. The backend is used only for signup and login; it does not store games, messages, ratings, or matchmaking state.
+The frontend owns live chess-game state. `chess.js` validates moves and detects terminal positions, while a browser Stockfish Web Worker selects AI moves and analyzes completed games. The Express API stores authentication, classrooms, puzzles, homework, attempts, ratings, analytics, and coach feedback.
 
 ### Capability status
 
@@ -13,15 +13,15 @@ The frontend owns all current chess state. `chess.js` validates moves and detect
 | Signup and login | Implemented | Coach, student, and player roles; bcrypt password hash and seven-day JWT |
 | Authenticated route gate | Implemented | Verifies an `HttpOnly` cookie session through `/api/auth/me` |
 | Local chess | Implemented | Two players can use the same browser board |
-| AI chess | Prototype | Browser heuristic; Stockfish is not integrated |
+| AI chess | Implemented | Portable single-threaded Stockfish WASM with depth mapped to difficulty |
 | Clocks and increments | Implemented | Clock starts after the first user move |
 | Checkmate/draw detection | Implemented | Delegated to `chess.js` |
 | Online chess | Not implemented | No socket, matchmaking, or synchronization flow |
 | Chat/inbox | UI demo | Hard-coded contacts and in-memory replies |
 | Profile/preferences | Placeholder | Menu entries have no views |
-| Puzzles | Implemented locally | Three mate-in-one positions with hints, move validation, and browser-persisted statistics |
+| Puzzles | Implemented | MongoDB-backed daily/rated puzzles plus coach-created homework puzzles |
 | Password recovery | Placeholder | Link points to `#` |
-| Game persistence | Not implemented | Refreshing or leaving `/play` loses the game |
+| Game persistence | Implemented for completed games | Stores validated moves, PGN/FEN, results, and Stockfish reviews per user |
 
 ## Architecture
 
@@ -187,13 +187,7 @@ The UI shows the latest four half-moves. Undo removes one half-move in non-AI mo
 
 ### AI
 
-The displayed “Stockfish AI” is not Stockfish:
-
-- **Easy:** random legal move.
-- **Medium:** usually a random capture, otherwise random.
-- **Hard/Expert:** checking move, then capture, then selected central squares, then random.
-
-Hard and Expert currently have identical behavior. There is no search tree, evaluation function, opening book, engine, or Web Worker.
+AI play uses the portable single-threaded Stockfish WASM engine in a Web Worker. Difficulty maps to search depth: Easy 5, Medium 8, Hard 11, and Expert 14. The same queued UCI engine analyzes completed games at depth 9 for move classification and evaluation.
 
 AI moves use a short visible thinking interval, allowing its active clock to consume time before the move is made.
 

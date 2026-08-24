@@ -27,6 +27,16 @@ function allowedValue(value, values, fallback) {
   return values.includes(value) ? value : fallback;
 }
 
+export function normalizeTimeControl(value) {
+  const normalized = value?.replaceAll(" ", "+");
+  if (TIME_CONTROLS.includes(normalized) && normalized !== "Custom") return normalized;
+  const match = normalized?.match(/^(\d{1,3})\+(\d{1,2})$/);
+  if (!match) return DEFAULTS.time;
+  const minutes = Number(match[1]); const increment = Number(match[2]);
+  if (minutes < 1 || minutes > 180 || increment < 0 || increment > 60) return DEFAULTS.time;
+  return `${minutes}+${increment}`;
+}
+
 export function normalizeGameMode(value) {
   return allowedValue(value, GAME_MODES, DEFAULTS.mode);
 }
@@ -35,8 +45,7 @@ export function getGameConfig(searchParams) {
   const mode = normalizeGameMode(searchParams.get("mode"));
   // URLSearchParams decodes a literal `+` as a space. Accept both legacy
   // `time=1+0` URLs and correctly encoded `time=1%2B0` URLs.
-  const requestedTime = searchParams.get("time")?.replaceAll(" ", "+");
-  const time = allowedValue(requestedTime, TIME_CONTROLS, DEFAULTS.time);
+  const time = normalizeTimeControl(searchParams.get("time"));
   const side = allowedValue(searchParams.get("side"), PLAYER_SIDES, DEFAULTS.side);
   const difficulty = allowedValue(
     searchParams.get("difficulty"),
@@ -44,7 +53,7 @@ export function getGameConfig(searchParams) {
     DEFAULTS.difficulty,
   );
 
-  const [minutes, increment] = time === "Custom" ? [10, 0] : time.split("+").map(Number);
+  const [minutes, increment] = time.split("+").map(Number);
 
   return {
     mode,

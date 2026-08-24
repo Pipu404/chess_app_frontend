@@ -9,10 +9,11 @@ import { logoutSession } from "@/lib/authStore";
 import { usePuzzleStats } from "@/hooks/usePuzzleStats";
 import {
   Menu, Bell, Globe, Bot, Users, BookOpen,
-  Home, Puzzle, BarChart2, User,
+  Home, Puzzle, User,
   UserCircle, Mail, Settings, LogOut,
-  ChevronLeft, Send, CheckCheck, Swords, Search
+  ChevronLeft, Send, CheckCheck, Swords, Search, LayoutDashboard
 } from "lucide-react";
+import { roleHome } from "@/lib/roleHome";
 
 // Pre-defined list of friends with their metadata & initial messages
 const INITIAL_FRIENDS = [
@@ -96,6 +97,7 @@ export default function HomeView() {
   const puzzleStats = usePuzzleStats();
   const userName = auth.user?.name || "Player";
   const userInitial = userName[0].toUpperCase();
+  const dashboardHref = auth.status === "authenticated" ? roleHome(auth.user.role) : "/";
   
   // Navigation & Dropdown states
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -183,6 +185,11 @@ export default function HomeView() {
   };
 
   const MENU_ITEMS = [
+    {
+      icon: LayoutDashboard,
+      label: "My dashboard",
+      onClick: () => { setDropdownOpen(false); router.push(dashboardHref); },
+    },
     {
       icon: UserCircle,
       label: "Profile",
@@ -294,6 +301,9 @@ export default function HomeView() {
               <h1 className="text-3xl font-black tracking-widest text-zinc-900 mb-1">CHESS</h1>
               <p className="text-zinc-500 font-medium text-sm">Play. Learn. Improve.</p>
               <p className="text-green-600 font-semibold text-xs mt-2">Welcome back, {userName}!</p>
+              <Link href={dashboardHref} className="mt-4 flex items-center gap-2 rounded-xl bg-zinc-900 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-zinc-800">
+                <LayoutDashboard size={16} /> Open {auth.user?.role || "player"} dashboard
+              </Link>
             </div>
 
             {/* Menu Options */}
@@ -351,9 +361,9 @@ export default function HomeView() {
                 <Puzzle size={22} />
                 <span className="text-[10px] font-semibold">Puzzles</span>
               </Link>
-              <Link href="/puzzles" className="flex flex-col items-center gap-1.5 text-zinc-400 hover:text-zinc-600 transition">
-                <BarChart2 size={22} />
-                <span className="text-[10px] font-semibold">Stats</span>
+              <Link href={dashboardHref} className="flex flex-col items-center gap-1.5 text-zinc-400 hover:text-zinc-600 transition">
+                <LayoutDashboard size={22} />
+                <span className="text-[10px] font-semibold">Dashboard</span>
               </Link>
               <button
                 onClick={() => setDropdownOpen((o) => !o)}

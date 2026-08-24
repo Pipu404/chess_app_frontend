@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, BookOpenCheck, ClipboardList, MessageSquareText, Users } from "lucide-react";
+import { BarChart3, BookOpenCheck, ClipboardList, MessageSquareText, Swords, Users } from "lucide-react";
 import RoleDashboard from "@/components/RoleDashboard";
 
 export default function CoachDashboard() {
@@ -10,5 +10,6 @@ export default function CoachDashboard() {
     { title: "Homework", description: "Build puzzle sets and assign work with due dates.", href: "/coach/homework", icon: ClipboardList },
     { title: "Analytics", description: "Review accuracy, solving time, and tactical weaknesses.", href: "/coach/analytics", icon: BarChart3 },
     { title: "Feedback", description: "Send personalized coaching notes to enrolled students.", href: "/coach/feedback", icon: MessageSquareText },
+    { title: "Player Portal", description: "Play AI or local games and train with global puzzles.", href: "/player", icon: Swords },
   ]} />;
 }

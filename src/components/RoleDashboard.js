@@ -3,21 +3,21 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, LogOut } from "lucide-react";
+import { ArrowRight, ChevronLeft, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { logoutSession } from "@/lib/authStore";
 import { roleHome } from "@/lib/roleHome";
 
-export default function RoleDashboard({ role, title, subtitle, features }) {
+export default function RoleDashboard({ role, title, subtitle, features, allowedRoles }) {
   const router = useRouter();
   const auth = useAuth();
 
   useEffect(() => {
     if (auth.status === "anonymous") router.push("/login");
-    if (auth.status === "authenticated" && auth.user.role !== role) {
+    if (auth.status === "authenticated" && !(allowedRoles || [role]).includes(auth.user.role)) {
       router.push(roleHome(auth.user.role));
     }
-  }, [auth, role, router]);
+  }, [allowedRoles, auth, role, router]);
 
   const signOut = async () => {
     await logoutSession();
@@ -27,6 +27,7 @@ export default function RoleDashboard({ role, title, subtitle, features }) {
   return (
     <main className="min-h-screen bg-zinc-50 px-4 py-8 text-zinc-900">
       <div className="mx-auto w-full max-w-5xl">
+        {auth.status === "authenticated" && auth.user.role !== role && <Link href={roleHome(auth.user.role)} className="mb-5 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-zinc-600 hover:bg-zinc-200/60"><ChevronLeft size={17}/>My {auth.user.role} dashboard</Link>}
         <header className="mb-8 flex items-start justify-between rounded-3xl bg-zinc-900 p-7 text-white shadow-xl">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-400">{role} portal</p>

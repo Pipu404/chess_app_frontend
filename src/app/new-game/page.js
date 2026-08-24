@@ -57,20 +57,26 @@ function NewGameContent() {
   const [selectedTime, setSelectedTime]           = useState("10+0");
   const [selectedDifficulty, setSelectedDifficulty] = useState("Medium");
   const [selectedSide, setSelectedSide]           = useState("White");
+  const [customMinutes, setCustomMinutes]         = useState("10");
+  const [customIncrement, setCustomIncrement]     = useState("0");
 
   useEffect(() => {
     if (auth.status === "anonymous") router.push("/login");
   }, [auth.status, router]);
 
   const handleStart = () => {
+    const timeControl = selectedTime === "Custom" ? `${Number(customMinutes)}+${Number(customIncrement)}` : selectedTime;
     const gameParams = new URLSearchParams({
       mode: selectedMode,
-      time: selectedTime,
+      time: timeControl,
       side: selectedSide,
       difficulty: selectedDifficulty,
     });
     router.push(`/play?${gameParams.toString()}`);
   };
+
+  const customTimeIsValid = Number.isInteger(Number(customMinutes)) && Number(customMinutes) >= 1 && Number(customMinutes) <= 180 && Number.isInteger(Number(customIncrement)) && Number(customIncrement) >= 0 && Number(customIncrement) <= 60;
+  const displayedTime = selectedTime === "Custom" ? `${customMinutes || "?"}+${customIncrement || "?"}` : selectedTime;
 
   return (
     <div className="flex flex-col min-h-screen bg-zinc-50 items-center justify-center font-sans text-zinc-900 px-4 py-6">
@@ -108,6 +114,11 @@ function NewGameContent() {
                 );
               })}
             </div>
+            {selectedTime === "Custom" && <div className="mt-3 grid grid-cols-2 gap-3 rounded-2xl border border-purple-200 bg-purple-50 p-4">
+              <label className="text-xs font-bold text-purple-900">Minutes<input aria-label="Custom minutes" required type="number" min="1" max="180" step="1" value={customMinutes} onChange={event => setCustomMinutes(event.target.value)} className="mt-1 w-full rounded-xl border border-purple-200 bg-white p-3 text-base font-black outline-none focus:ring-2 focus:ring-purple-500"/></label>
+              <label className="text-xs font-bold text-purple-900">Increment (sec)<input aria-label="Custom increment seconds" required type="number" min="0" max="60" step="1" value={customIncrement} onChange={event => setCustomIncrement(event.target.value)} className="mt-1 w-full rounded-xl border border-purple-200 bg-white p-3 text-base font-black outline-none focus:ring-2 focus:ring-purple-500"/></label>
+              <p className="col-span-2 text-[10px] font-semibold text-purple-700">Choose 1–180 minutes and a 0–60 second increment.</p>
+            </div>}
           </div>
 
           {/* ── Time Control ── */}
@@ -198,7 +209,7 @@ function NewGameContent() {
             <div className="flex flex-col gap-1">
               {[
                 ["Mode",       MODES.find(m => m.id === selectedMode)?.label],
-                ["Time",       selectedTime],
+                ["Time",       displayedTime],
                 ...(selectedMode === "ai" ? [["Difficulty", selectedDifficulty]] : []),
                 ["Playing as", selectedSide],
               ].map(([label, value]) => (
@@ -213,7 +224,8 @@ function NewGameContent() {
           {/* ── Start ── */}
           <button
             onClick={handleStart}
-            className="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-bold rounded-2xl py-4 flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-lg shadow-zinc-900/20"
+            disabled={selectedTime === "Custom" && !customTimeIsValid}
+            className="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-bold rounded-2xl py-4 flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-lg shadow-zinc-900/20 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Start Game
             <ChevronRight size={18} />
