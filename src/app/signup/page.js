@@ -39,22 +39,22 @@ export default function SignUp() {
     }
   };
   return (
-    <div className="flex flex-col min-h-screen bg-zinc-50 items-center justify-center font-sans text-zinc-900 px-4">
+    <main className="flex min-h-screen items-center justify-center bg-[#080d17] px-4 py-8 font-sans text-slate-100">
       {/* Mobile App Container */}
-      <div className="w-full max-w-[400px] bg-white min-h-[850px] shadow-2xl rounded-[40px] overflow-hidden flex flex-col relative border-[8px] border-zinc-100">
+      <div className="relative flex min-h-[760px] w-full max-w-[460px] flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-white/[.045] shadow-2xl shadow-black/50 backdrop-blur-xl">
         
         {/* Header */}
-        <div className="flex items-center px-6 pt-10 pb-4">
-          <Link href="/login" className="p-2 -ml-2 rounded-full hover:bg-zinc-100 transition">
-            <ChevronLeft size={24} className="text-zinc-600" />
+        <div className="flex items-center border-b border-white/10 px-6 py-5">
+          <Link href="/login" className="-ml-2 rounded-full p-2 transition hover:bg-white/10">
+            <ChevronLeft size={24} className="text-slate-400" />
           </Link>
         </div>
 
         {/* Content */}
-        <div className="flex flex-col flex-1 px-8 pt-6 pb-10">
+        <div className="flex flex-1 flex-col px-7 pb-8 pt-7">
           <div className="mb-8">
-            <h1 className="text-4xl font-extrabold tracking-tight mb-2 text-zinc-900">Create <br/>Account</h1>
-            <p className="text-zinc-500 font-medium text-sm">Join to play and learn chess</p>
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-[.2em] text-amber-300">Quiet Chess</p><h1 className="mb-2 text-4xl font-extrabold tracking-tight text-white">Create account</h1>
+            <p className="text-sm font-medium text-slate-400">Join to play and learn chess.</p>
           </div>
 
           <form className="flex flex-col gap-5 flex-1" onSubmit={handleSubmit}>
@@ -154,7 +154,7 @@ export default function SignUp() {
             </div>
 
             <div className="mt-6 flex flex-col gap-4">
-              <button disabled={loading} className="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-bold rounded-2xl py-4 flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-lg shadow-zinc-900/20 disabled:opacity-70">
+              <button disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-300 py-4 font-bold text-slate-950 shadow-lg shadow-amber-300/10 transition-all hover:bg-amber-200 active:scale-[0.98] disabled:opacity-70">
                 {loading ? "Signing up..." : "Sign Up"}
                 {!loading && <ArrowRight size={18} />}
               </button>
@@ -182,6 +182,6 @@ export default function SignUp() {
         </div>
 
       </div>
-    </div>
+    </main>
   );
 }

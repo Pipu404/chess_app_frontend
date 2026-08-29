@@ -268,27 +268,27 @@ function GameContent() {
   const playerTime = isFlipped ? blackTime : whiteTime;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-3 py-3 font-sans text-zinc-900 sm:px-4 lg:px-6 lg:py-6">
+    <div className="flex min-h-screen items-center justify-center bg-[#080d17] px-3 py-3 font-sans text-slate-100 sm:px-4 lg:px-6 lg:py-6">
       {/* Responsive game shell */}
-      <div className="relative flex min-h-[780px] w-full max-w-[420px] flex-col overflow-hidden rounded-[32px] border-4 border-zinc-100 bg-white shadow-2xl sm:rounded-[40px] sm:border-8 lg:grid lg:h-[calc(100vh-3rem)] lg:min-h-[720px] lg:max-h-[920px] lg:max-w-6xl lg:grid-cols-[minmax(0,1fr)_360px] lg:grid-rows-[auto_auto_1fr_auto_auto] lg:rounded-[32px] lg:border-4">
+      <div className="relative flex min-h-[780px] w-full max-w-[420px] flex-col overflow-hidden rounded-[32px] border border-white/10 bg-[#111a28] shadow-2xl shadow-black/50 sm:rounded-[40px] lg:grid lg:h-[calc(100vh-3rem)] lg:min-h-[720px] lg:max-h-[920px] lg:max-w-6xl lg:grid-cols-[minmax(0,1fr)_360px] lg:grid-rows-[auto_auto_1fr_auto_auto] lg:rounded-[32px]">
         
         {/* Top Header */}
-        <div className="flex items-center justify-between px-6 pb-4 pt-8 lg:col-span-2 lg:row-start-1 lg:border-b lg:px-8 lg:py-5">
-          <Link href="/new-game" className="p-2 -ml-2 rounded-full hover:bg-zinc-100 transition">
-            <ChevronLeft size={24} className="text-zinc-600" />
+        <div className="flex items-center justify-between border-white/10 px-6 pb-4 pt-8 lg:col-span-2 lg:row-start-1 lg:border-b lg:px-8 lg:py-5">
+          <Link href="/new-game" className="-ml-2 rounded-full p-2 transition hover:bg-white/10">
+            <ChevronLeft size={24} className="text-slate-400" />
           </Link>
 
           {/* Opponent Info (Top) */}
           <div className="flex items-center gap-3">
             <div className="flex flex-col items-end">
-              <span className="text-xs font-bold leading-tight">
+              <span className="text-xs font-bold leading-tight text-slate-200">
                 {mode === "ai" ? `Stockfish AI (${difficulty})` : "Opponent"}
               </span>
-              <div className={`px-2.5 py-0.5 rounded text-[10px] font-bold ${turn !== userColor ? "bg-amber-100 text-amber-800" : "bg-zinc-100 text-zinc-600"}`}>
+              <div className={`rounded px-2.5 py-0.5 font-mono text-[10px] font-bold ${turn !== userColor ? "bg-amber-300 text-slate-950" : "bg-white/10 text-slate-400"}`}>
                 {formatTime(opponentTime)}
               </div>
             </div>
-            <div className="w-9 h-9 rounded-full bg-zinc-200 overflow-hidden border border-zinc-300">
+            <div className="h-9 w-9 overflow-hidden rounded-full border border-white/10 bg-white/10">
               <Image 
                 src={`https://api.dicebear.com/7.x/bottts/svg?seed=${mode === "ai" ? "Stockfish" : "Opponent"}`} 
                 alt="Opponent" 
@@ -301,18 +301,18 @@ function GameContent() {
         </div>
 
         {/* Board Header Stats */}
-        <div className="flex items-center justify-between border-y border-zinc-100 bg-zinc-50/50 px-6 py-2 lg:col-start-1 lg:row-start-2 lg:border-r lg:border-t-0 lg:px-8 lg:py-3">
-          <span className="text-[11px] font-bold tracking-wide uppercase text-zinc-400">
+        <div className="flex items-center justify-between border-y border-white/10 bg-white/[.025] px-6 py-2 lg:col-start-1 lg:row-start-2 lg:border-r lg:border-t-0 lg:px-8 lg:py-3">
+          <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
             {mode.toUpperCase()} MODE • {timeParam}
           </span>
-          <span className="text-[11px] font-bold text-zinc-600 bg-white border px-2 py-0.5 rounded-full shadow-sm">
+          <span className="rounded-full border border-amber-300/25 bg-amber-300/10 px-2 py-0.5 text-[11px] font-bold text-amber-200">
             {turn === "w" ? "White's turn" : "Black's turn"}
           </span>
         </div>
 
         {/* Board Area */}
         <div className="flex-shrink-0 px-4 py-4 lg:col-start-1 lg:row-start-3 lg:row-span-3 lg:flex lg:min-h-0 lg:items-center lg:justify-center lg:border-r lg:p-6">
-          <div className="relative flex aspect-square w-full flex-col overflow-hidden rounded-2xl border border-zinc-200/60 bg-[#efebe4] shadow-md lg:h-full lg:max-h-[680px] lg:w-auto lg:max-w-full lg:flex-1">
+          <div className="relative flex aspect-square w-full flex-col overflow-hidden rounded-2xl border border-[#d4a359]/25 bg-[#17110e] shadow-2xl shadow-black/40 lg:h-full lg:max-h-[680px] lg:w-auto lg:max-w-full lg:flex-1">
             {renderedRows.map((rank, rowIndex) => (
               <div key={rank} className="flex flex-1">
                 {renderedCols.map((file, colIndex) => {
@@ -331,17 +331,17 @@ function GameContent() {
                       data-square={squareRepr}
                       onClick={() => handleSquareClick(squareRepr)}
                       className={`flex-1 relative flex items-center justify-center cursor-pointer transition-all duration-100 select-none ${
-                        isDark ? "bg-[#e2d5c3]" : "bg-[#f5f1ea]"
+                        isDark ? "bg-[#5a4032]" : "bg-[#dac7ad]"
                       } ${isSelected ? "ring-4 ring-zinc-900/40 ring-inset" : ""}`}
                     >
                       {/* Last move highlight */}
                       {isLastMoveSquare && !isSelected && (
-                        <div className="absolute inset-0 bg-amber-200/40 mix-blend-multiply pointer-events-none" />
+                        <div className="pointer-events-none absolute inset-0 bg-amber-300/45 mix-blend-multiply" />
                       )}
 
                       {/* Possible move indicator dot */}
                       {isPossibleTarget && (
-                        <div className="absolute w-3.5 h-3.5 bg-zinc-900/25 rounded-full z-20 pointer-events-none" />
+                        <div className="pointer-events-none absolute z-20 h-3.5 w-3.5 rounded-full bg-[#17110e]/30" />
                       )}
 
                       {/* Coordinate Labels */}

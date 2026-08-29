@@ -79,18 +79,18 @@ function NewGameContent() {
   const displayedTime = selectedTime === "Custom" ? `${customMinutes || "?"}+${customIncrement || "?"}` : selectedTime;
 
   return (
-    <div className="flex flex-col min-h-screen bg-zinc-50 items-center justify-center font-sans text-zinc-900 px-4 py-6">
-      <div className="w-full max-w-[400px] bg-white shadow-2xl rounded-[40px] overflow-hidden flex flex-col border-[8px] border-zinc-100">
+    <div className="flex min-h-screen items-center justify-center bg-[#080d17] px-4 py-8 font-sans text-slate-100">
+      <div className="w-full max-w-3xl overflow-hidden rounded-[2rem] border border-white/10 bg-white/[.04] shadow-2xl shadow-black/40 backdrop-blur-xl">
 
         {/* Header */}
-        <div className="flex items-center px-6 pt-8 pb-2">
-          <Link href="/" className="p-2 -ml-2 rounded-full hover:bg-zinc-100 transition">
-            <ChevronLeft size={24} className="text-zinc-600" />
+        <div className="flex items-center border-b border-white/10 px-6 py-5">
+          <Link href="/" className="-ml-2 rounded-full p-2 transition hover:bg-white/10">
+            <ChevronLeft size={24} className="text-slate-400" />
           </Link>
-          <h1 className="text-lg font-bold text-zinc-900 ml-2">New Game</h1>
+          <div className="ml-2"><p className="text-[10px] font-bold uppercase tracking-[.2em] text-amber-300">Quiet Chess</p><h1 className="text-lg font-semibold text-white">Set up your board</h1></div>
         </div>
 
-        <div className="flex flex-col gap-5 px-6 pt-2 pb-8">
+        <div className="grid gap-5 px-6 pb-7 pt-6 md:grid-cols-2">
 
           {/* ── Mode ── */}
           <div>
@@ -104,8 +104,8 @@ function NewGameContent() {
                     onClick={() => setSelectedMode(id)}
                     className={`flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl border-2 text-xs font-bold transition-all ${
                       active
-                        ? "border-zinc-900 bg-zinc-900 text-white shadow-md"
-                        : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-400"
+                        ? "border-amber-300 bg-amber-300 text-slate-950 shadow-lg shadow-amber-300/10"
+                        : "border-white/10 bg-slate-950/30 text-slate-300 hover:border-amber-300/50"
                     }`}
                   >
                     <Icon size={20} />
@@ -133,8 +133,8 @@ function NewGameContent() {
                     onClick={() => setSelectedTime(time)}
                     className={`flex flex-col items-center justify-center py-3 rounded-2xl border-2 transition-all duration-150 ${
                       active
-                        ? `${TYPE_ACTIVE_BG[type]} ring-2 ring-offset-1 scale-[1.06] shadow-lg text-white`
-                        : "bg-zinc-50 border-zinc-200 text-zinc-700 hover:border-zinc-400 hover:scale-[1.02]"
+                        ? "border-amber-300 bg-amber-300 text-slate-950 shadow-lg shadow-amber-300/10"
+                        : "border-white/10 bg-slate-950/30 text-slate-300 hover:border-amber-300/50"
                     }`}
                   >
                     <span className="text-base font-black leading-none">
@@ -160,8 +160,8 @@ function NewGameContent() {
                     onClick={() => setSelectedDifficulty(d)}
                     className={`py-3 rounded-2xl border-2 text-xs font-bold transition-all ${
                       selectedDifficulty === d
-                        ? "border-zinc-900 bg-zinc-900 text-white"
-                        : "border-zinc-200 bg-zinc-50 text-zinc-600 hover:border-zinc-400"
+                        ? "border-amber-300 bg-amber-300 text-slate-950"
+                        : "border-white/10 bg-slate-950/30 text-slate-300 hover:border-amber-300/50"
                     }`}
                   >
                     {d}
@@ -184,8 +184,8 @@ function NewGameContent() {
                     onClick={() => setSelectedSide(side)}
                     className={`flex flex-col items-center justify-center gap-2 py-5 rounded-2xl border-2 transition-all font-bold ${
                       active
-                        ? "border-zinc-900 bg-zinc-900 text-white shadow-md"
-                        : "border-zinc-200 bg-zinc-50 text-zinc-700 hover:border-zinc-400"
+                        ? "border-amber-300 bg-amber-300 text-slate-950 shadow-lg shadow-amber-300/10"
+                        : "border-white/10 bg-slate-950/30 text-slate-300 hover:border-amber-300/50"
                     }`}
                   >
                     <svg viewBox="0 0 45 45" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg">
@@ -204,7 +204,7 @@ function NewGameContent() {
           </div>
 
           {/* ── Summary ── */}
-          <div className="bg-zinc-50 border border-zinc-200 rounded-2xl p-4 text-sm">
+          <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4 text-sm">
             <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Summary</p>
             <div className="flex flex-col gap-1">
               {[
@@ -225,7 +225,7 @@ function NewGameContent() {
           <button
             onClick={handleStart}
             disabled={selectedTime === "Custom" && !customTimeIsValid}
-            className="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-bold rounded-2xl py-4 flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-lg shadow-zinc-900/20 disabled:cursor-not-allowed disabled:opacity-40"
+            className="w-full rounded-2xl bg-amber-300 py-4 font-bold text-slate-950 shadow-lg shadow-amber-300/10 transition-all hover:bg-amber-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
           >
             Start Game
             <ChevronRight size={18} />

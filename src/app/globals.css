@@ -1,8 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #080d17;
+  --foreground: #e8edf5;
+  --font-geist-sans: Arial, Helvetica, sans-serif;
+  --font-geist-mono: "Courier New", Courier, monospace;
 }
 
 @theme inline {
@@ -23,4 +25,61 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Shared calm chess surface system for the app's existing route layouts. */
+main .bg-zinc-50,
+main .bg-white,
+main .bg-slate-50 {
+  background-color: rgba(18, 28, 43, 0.78) !important;
+  backdrop-filter: blur(16px);
+}
+
+main .border,
+main .border-zinc-100,
+main .border-zinc-200,
+main .border-slate-200 {
+  border-color: rgba(148, 163, 184, 0.16) !important;
+}
+
+main .text-zinc-950,
+main .text-zinc-900,
+main .text-zinc-800,
+main .text-slate-900,
+main .text-slate-800 {
+  color: #edf2f8 !important;
+}
+
+main .text-zinc-700,
+main .text-zinc-600,
+main .text-slate-700,
+main .text-slate-600 {
+  color: #b8c3d3 !important;
+}
+
+main .text-zinc-500,
+main .text-zinc-400,
+main .text-slate-500,
+main .text-slate-400 {
+  color: #8794a8 !important;
+}
+
+main input,
+main select,
+main textarea {
+  background-color: rgba(8, 13, 23, 0.58) !important;
+  border-color: rgba(148, 163, 184, 0.2) !important;
+  color: #edf2f8 !important;
+}
+
+main input:focus,
+main select:focus,
+main textarea:focus {
+  border-color: #d4a359 !important;
+  box-shadow: 0 0 0 3px rgba(212, 163, 89, 0.12) !important;
+}
+
+main .bg-amber-400,
+main .bg-amber-300 {
+  color: #17130c !important;
 }

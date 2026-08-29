@@ -1,8 +1,25 @@
-export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/$/, "");
+const configuredApiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/$/, "");
+
+function isLocalNetworkHost(hostname) {
+  return hostname === "localhost"
+    || hostname === "127.0.0.1"
+    || /^10\./.test(hostname)
+    || /^192\.168\./.test(hostname)
+    || /^172\.(1[6-9]|2\d|3[01])\./.test(hostname);
+}
+
+export function getApiBaseUrl() {
+  if (typeof window !== "undefined" && isLocalNetworkHost(window.location.hostname)) {
+    return `http://${window.location.hostname}:5000`;
+  }
+  return configuredApiBaseUrl;
+}
+
+export const API_BASE_URL = configuredApiBaseUrl;
 
 export function apiUrl(path) {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return `${API_BASE_URL}${normalizedPath}`;
+  return `${getApiBaseUrl()}${normalizedPath}`;
 }
 
 export class ApiError extends Error {
